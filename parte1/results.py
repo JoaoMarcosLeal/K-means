@@ -7,7 +7,7 @@ from sklearn.metrics import (
     precision_score,
     recall_score,
 )
-
+import time
 
 from KNN_hardcore import My_KNN
 
@@ -45,9 +45,21 @@ def KNN_sklearn(k: int):
     Returns:
         list[int]: Uma lista contendo as previsões (os "chutes") do algoritmo para cada ponto de dados.
     """
+    
     knn = KNeighborsClassifier(n_neighbors=k)
+    
+    curr = time.time()
     knn.fit(X_train, y_train)
-    return knn.predict(X_test)
+    total_time_training = time.time() - curr
+    
+    curr = time.time()
+    predictions = knn.predict(X_test)
+    total_time_clf = time.time() - curr    
+    
+    print(f"tempo de treinamento \n {total_time_training:.4f}")
+    print(f"tempo de classificação \n {total_time_clf:.4f}")
+    
+    return predictions
 
 
 def precision(y_pred):
@@ -108,5 +120,5 @@ for k in neighbors:
 
         printMetrics(pred, title)
 
-        # Exibe a matriz de confusão 
+        # Exibe a matriz de confusão
         plt.show()
