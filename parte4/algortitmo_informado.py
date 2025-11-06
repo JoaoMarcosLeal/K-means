@@ -6,6 +6,9 @@ class State:
     def __init__(self, quadrados):
         self.quadrados = quadrados
         # Número e sua posição esperada na tabela
+        self.h = 0
+        self.g = 0
+        self.f = 0
         self.estado_final = {
             0: (1, 1),
             1: (0, 0),
@@ -39,6 +42,11 @@ class State:
         placa_flat = tuple(item for sublist in self.quadrados for item in sublist)
         return hash(placa_flat)
 
+    def __lt__ (self, outro):
+        if isinstance(outro, State):
+            return outro.f > self.f   
+        return False
+    
     def copia(self):
         nova_tabela = []
 
@@ -70,6 +78,7 @@ class State:
             if i >= 0 and i < N and j < N and j >= 0:
                 vizinho = self.copia()
                 vizinho.pai = self
+                vizinho.g += self.g + 1
                 vizinho.quadrados[lin_vazio][col_vazio] = self.quadrados[i][j]
                 vizinho.quadrados[i][j] = self.quadrados[lin_vazio][col_vazio]
                 vizinhos.append(vizinho)
@@ -105,7 +114,7 @@ class State:
                 return passos, noh
 
             vizinhos = noh.expandir()
-            for vizinho in vizinhos:
+            for vizinho in reversed(vizinhos): 
                 if vizinho not in visitados:
                     pilha.append(vizinho)
 
@@ -113,29 +122,40 @@ class State:
         return -1, None
 
     def astr(self):
-        custo_inicial = self.calcular_dist(self.quadrados)
-        
-        heap, visitados = [(custo_inicial, self)], set([])
+        self.g = 0
+        self.h = self.calcular_dist(self.quadrados)
+        self.f = self.h + self.g 
+
+        g_custo = {self: self.g}
+        heap = [(self.f, self)]
         passos = 0
 
         while heap:
             custo, noh = heap[0]
             heappop(heap)
-
-            if noh in visitados:
-                continue
-
-            visitados.add(noh)
             passos += 1
 
-            if custo == 0:
+            if noh.acabou():
                 return passos, noh
 
-            vizinhos = self.expandir()
+            if custo > g_custo.get(noh, float('inf')) + noh.h:
+                    continue
+
+            vizinhos = noh.expandir()
             for vizinho in vizinhos:
-                if vizinho not in visitados:
-                    custo = self.calcular_dist(vizinho.quadrados)
-                    heappush(heap, (custo, vizinho))
+                novo_g = noh.g + 1
+                
+                if novo_g < g_custo.get(vizinho, float('inf')):
+                    
+                    vizinho.g = novo_g
+                    vizinho.h = self.calcular_dist(vizinho.quadrados) 
+                    vizinho.f = vizinho.g + vizinho.h                   
+                    
+                    g_custo[vizinho] = novo_g
+                    
+                    heappush(heap, (vizinho.f, vizinho))
+        return -1, None
+            
 
     def calcular_dist(self, estado):
         custo_total = 0
@@ -172,4 +192,5 @@ estado_final_tabela = [[1, 2, 3], [8, 0, 4], [7, 6, 5]]
 state_correto = State(estado_final_tabela)
 state_errado = State([[2, 0, 3], [1, 7, 4], [6, 8, 5]])
 
-print(state_errado.resolver())
+print(state_errado.astr())
+print(state_errado.dfs())
