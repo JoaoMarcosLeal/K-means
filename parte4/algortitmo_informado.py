@@ -172,25 +172,26 @@ class State:
         point_b = np.array(point_b)
         return np.sum(np.abs(point_a - point_b))
 
+def menu_op():
+    menu = "1 - Resolver o jogo com algoritmo cego"
+    menu += "\n2 - Resolver o jogo com algoritmo informado" 
+    menu += "\n0 - sair\n" 
+    return menu
 
-estado_inicial = np.array([[2, 0, 3], [1, 7, 4], [6, 8, 5]])
+op = int(input(menu_op())) 
+while op != 0: 
+    estado_inicial = []
+   
+    for i in range(3): 
+        nums = input(f"Digite os números da linha {i + 1}: ")
+        linha = list(map(int, nums.split())) 
+        estado_inicial.append(linha)
+    
+    estado = State(estado_inicial)
 
-estado_final = {
-    0: (1, 1),
-    1: (0, 0),
-    2: (0, 1),
-    3: (0, 2),
-    4: (1, 2),
-    5: (2, 2),
-    6: (2, 1),
-    7: (2, 0),
-    8: (1, 0),
-}
+    if op == 1:
+        print(estado.dfs())
+    if op == 2: 
+        print(estado.astr())
 
-estado_final_tabela = [[1, 2, 3], [8, 0, 4], [7, 6, 5]]
-
-state_correto = State(estado_final_tabela)
-state_errado = State([[2, 0, 3], [1, 7, 4], [6, 8, 5]])
-
-print(state_errado.astr())
-print(state_errado.dfs())
+    op = int(input(menu_op()))
