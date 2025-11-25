@@ -6,6 +6,9 @@ class State:
     def __init__(self, quadrados):
         self.quadrados = quadrados
         # Número e sua posição esperada na tabela
+        self.h = 0
+        self.g = 0
+        self.f = 0
         self.estado_final = {
             0: (1, 1),
             1: (0, 0),
@@ -39,6 +42,11 @@ class State:
         placa_flat = tuple(item for sublist in self.quadrados for item in sublist)
         return hash(placa_flat)
 
+    def __lt__ (self, outro):
+        if isinstance(outro, State):
+            return outro.f > self.f   
+        return False
+    
     def copia(self):
         nova_tabela = []
 
@@ -70,6 +78,7 @@ class State:
             if i >= 0 and i < N and j < N and j >= 0:
                 vizinho = self.copia()
                 vizinho.pai = self
+                vizinho.g += self.g + 1
                 vizinho.quadrados[lin_vazio][col_vazio] = self.quadrados[i][j]
                 vizinho.quadrados[i][j] = self.quadrados[lin_vazio][col_vazio]
                 vizinhos.append(vizinho)
@@ -105,7 +114,7 @@ class State:
                 return passos, noh
 
             vizinhos = noh.expandir()
-            for vizinho in vizinhos:
+            for vizinho in reversed(vizinhos): 
                 if vizinho not in visitados:
                     pilha.append(vizinho)
 
@@ -113,29 +122,40 @@ class State:
         return -1, None
 
     def astr(self):
-        custo_inicial = self.calcular_dist(self.quadrados)
-        
-        heap, visitados = [(custo_inicial, self)], set([])
+        self.g = 0
+        self.h = self.calcular_dist(self.quadrados)
+        self.f = self.h + self.g 
+
+        g_custo = {self: self.g}
+        heap = [(self.f, self)]
         passos = 0
 
         while heap:
             custo, noh = heap[0]
             heappop(heap)
-
-            if noh in visitados:
-                continue
-
-            visitados.add(noh)
             passos += 1
 
-            if custo == 0:
+            if noh.acabou():
                 return passos, noh
 
-            vizinhos = self.expandir()
+            if custo > g_custo.get(noh, float('inf')) + noh.h:
+                    continue
+
+            vizinhos = noh.expandir()
             for vizinho in vizinhos:
-                if vizinho not in visitados:
-                    custo = self.calcular_dist(vizinho.quadrados)
-                    heappush(heap, (custo, vizinho))
+                novo_g = noh.g + 1
+                
+                if novo_g < g_custo.get(vizinho, float('inf')):
+                    
+                    vizinho.g = novo_g
+                    vizinho.h = self.calcular_dist(vizinho.quadrados) 
+                    vizinho.f = vizinho.g + vizinho.h                   
+                    
+                    g_custo[vizinho] = novo_g
+                    
+                    heappush(heap, (vizinho.f, vizinho))
+        return -1, None
+            
 
     def calcular_dist(self, estado):
         custo_total = 0
@@ -152,24 +172,26 @@ class State:
         point_b = np.array(point_b)
         return np.sum(np.abs(point_a - point_b))
 
+def menu_op():
+    menu = "1 - Resolver o jogo com algoritmo cego"
+    menu += "\n2 - Resolver o jogo com algoritmo informado" 
+    menu += "\n0 - sair\n" 
+    return menu
 
-estado_inicial = np.array([[2, 0, 3], [1, 7, 4], [6, 8, 5]])
+op = int(input(menu_op())) 
+while op != 0: 
+    estado_inicial = []
+   
+    for i in range(3): 
+        nums = input(f"Digite os números da linha {i + 1}: ")
+        linha = list(map(int, nums.split())) 
+        estado_inicial.append(linha)
+    
+    estado = State(estado_inicial)
 
-estado_final = {
-    0: (1, 1),
-    1: (0, 0),
-    2: (0, 1),
-    3: (0, 2),
-    4: (1, 2),
-    5: (2, 2),
-    6: (2, 1),
-    7: (2, 0),
-    8: (1, 0),
-}
+    if op == 1:
+        print(estado.dfs())
+    if op == 2: 
+        print(estado.astr())
 
-estado_final_tabela = [[1, 2, 3], [8, 0, 4], [7, 6, 5]]
-
-state_correto = State(estado_final_tabela)
-state_errado = State([[2, 0, 3], [1, 7, 4], [6, 8, 5]])
-
-print(state_errado.resolver())
+    op = int(input(menu_op()))
