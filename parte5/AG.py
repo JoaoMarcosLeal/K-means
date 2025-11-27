@@ -1,11 +1,27 @@
 import numpy as np
+from random import choices
 
 INTERVALO = [-10, 10]
 POPULACAO_INICIAL = 4
+TAM_CROMOSSOMO = 5
 
 
 def func(x: int):
     return pow(x, 2) - 3 * x + 4
+
+
+def gerar_indiviuo():
+    individuo_int = np.random.randint(low=INTERVALO[0], high=INTERVALO[1])
+    individuo = "{0:b}".format(abs(individuo_int))
+
+    # Adiciona os zeros para ter o mesmo tamanho de um cromossomo
+    individuo = "0" * (TAM_CROMOSSOMO - 1 - len(individuo)) + individuo
+
+    # Atreibui um bit para representar o sinal (1 negativo ou 0 positivo)
+    sinal = "1" if individuo_int < 0 else "0"
+    individuo = sinal + individuo
+
+    return individuo
 
 
 def calc_prob(cromossomos):
@@ -23,15 +39,17 @@ def calc_prob(cromossomos):
     return np.array(probabilidades)
 
 
+def converter_para_int(num_binario: str):
+    sinal = -1 if num_binario[0] == 1 else 1
+    num_int = sinal * int(num_binario[0:], 2)
+    return num_int
+
+
 def gerar_populacao_inicial():
-    ja_foi = set()
     cromossomos = []
 
-    while len(ja_foi) != POPULACAO_INICIAL:
-        numero_aleatorio = np.random.randint(low=INTERVALO[0], high=INTERVALO[1])
-        if numero_aleatorio not in ja_foi:
-            ja_foi.add(numero_aleatorio)
-            cromossomos.append(numero_aleatorio)
+    for _ in range(POPULACAO_INICIAL):
+        cromossomos.append(gerar_indiviuo())
 
     return np.array(cromossomos)
 
@@ -41,9 +59,7 @@ def roleta(cromossomos):
 
     return np.random.choice(a=cromossomos, size=4, p=probabilidades)
 
-def crossover(cromossomos):
-    
 
 cromossomos = gerar_populacao_inicial()
 
-print(roleta(cromossomos=cromossomos))
+print(cromossomos)
